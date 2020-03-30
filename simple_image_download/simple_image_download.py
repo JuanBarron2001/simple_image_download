@@ -2,8 +2,20 @@ import os
 import time
 import urllib
 import requests
+import sys
 from urllib.parse import quote
 import array as arr
+
+###########################################################
+def progress_bar(index, max, bar_length):
+    percent = float(index) / max
+    hashes = '#' * int(round(percent * bar_length))
+    spaces = ' ' * (bar_length - len(hashes))
+    sys.stdout.write("\rPercent: [{0}] {1}%".format(hashes + spaces, int(round(percent * 100))))
+    sys.stdout.flush()
+    if percent == 100:
+        print("\n")
+############################################################
 
 class simple_image_download:
     def __init__(self):
@@ -41,10 +53,9 @@ class simple_image_download:
                         print(e)
                         break
 
-
                 try:
                     r = requests.get(object_raw, allow_redirects=True)
-                    if('html' not in str(r.content)):
+                    if ('html' not in str(r.content)):
                         links.append(object_raw)
                     else:
                         j -= 1
@@ -54,8 +65,7 @@ class simple_image_download:
                 j += 1
 
             i += 1
-        return(links)
-
+        return (links)
 
     def download(self, keywords, limit):
         keyword_to_search = [str(item).strip() for item in keywords.split(',')]
@@ -63,15 +73,21 @@ class simple_image_download:
         i = 0
 
         while i < len(keyword_to_search):
+            print("\n" + keyword_to_search[i] + ":")
+
             self._create_directories(main_directory, keyword_to_search[i])
             url = 'https://www.google.com/search?q=' + quote(
-                keyword_to_search[i].encode('utf-8')) + '&biw=1536&bih=674&tbm=isch&sxsrf=ACYBGNSXXpS6YmAKUiLKKBs6xWb4uUY5gA:1581168823770&source=lnms&sa=X&ved=0ahUKEwioj8jwiMLnAhW9AhAIHbXTBMMQ_AUI3QUoAQ'
+                keyword_to_search[i].encode(
+                    'utf-8')) + '&biw=1536&bih=674&tbm=isch&sxsrf=ACYBGNSXXpS6YmAKUiLKKBs6xWb4uUY5gA:1581168823770&source=lnms&sa=X&ved=0ahUKEwioj8jwiMLnAhW9AhAIHbXTBMMQ_AUI3QUoAQ'
             raw_html = self._download_page(url)
 
             end_object = -1;
 
             j = 0
             while j < limit:
+
+                progress_bar(j+1,limit,50)
+
                 while (True):
                     try:
                         new_line = raw_html.find('"https://', end_object + 1)
@@ -79,9 +95,9 @@ class simple_image_download:
 
                         buffor = raw_html.find('\\', new_line + 1, end_object)
                         if buffor != -1:
-                            object_raw = (raw_html[new_line+1:buffor])
+                            object_raw = (raw_html[new_line + 1:buffor])
                         else:
-                            object_raw = (raw_html[new_line+1:end_object])
+                            object_raw = (raw_html[new_line + 1:end_object])
 
                         if '.jpg' in object_raw or 'png' in object_raw or '.ico' in object_raw or '.gif' in object_raw or '.jpeg' in object_raw:
                             break
@@ -92,7 +108,7 @@ class simple_image_download:
 
                 path = main_directory + keyword_to_search[i]
 
-                #print(object_raw)
+                # print(object_raw)
 
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -101,7 +117,7 @@ class simple_image_download:
 
                 try:
                     r = requests.get(object_raw, allow_redirects=True)
-                    if('html' not in str(r.content)):
+                    if ('html' not in str(r.content)):
                         open(os.path.join(path, filename), 'wb').write(r.content)
                     else:
                         j -= 1
@@ -110,8 +126,9 @@ class simple_image_download:
                     j -= 1
                 j += 1
 
-            i += 1
+                time.sleep(0.3)
 
+            i += 1
 
     def _create_directories(self, main_directory, name):
         try:
@@ -134,11 +151,12 @@ class simple_image_download:
             pass
         return
 
-    def _download_page(self,url):
+    def _download_page(self, url):
 
         try:
             headers = {}
-            headers['User-Agent'] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"
+            headers[
+                'User-Agent'] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"
             req = urllib.request.Request(url, headers=headers)
             resp = urllib.request.urlopen(req)
             respData = str(resp.read())
